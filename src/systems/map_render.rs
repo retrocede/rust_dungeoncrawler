@@ -16,7 +16,7 @@ pub fn map_render(
         let idx = map_idx(x, y);
         let glyph = match map.tiles[idx] {
           TileType::Floor => to_cp437('.'),
-          TileTipe::Wall => to_cp437('#'),
+          TileType::Wall => to_cp437('#'),
         };
 
         draw_batch.set(
