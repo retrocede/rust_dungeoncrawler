@@ -1,6 +1,9 @@
 mod map;
 mod map_builder;
 mod camera;
+mod components;
+mod spawner;
+mod systems;
 
 pub mod prelude {
     pub use bracket_lib::prelude::*;
@@ -14,21 +17,32 @@ pub mod prelude {
     pub use crate::map::*;
     pub use crate::map_builder::*;
     pub use crate::camera::*;
+    pub use crate::components::*;
+    pub use crate::spawner::*;
+    pub use crate::systems::*;
 }
 
 use prelude::*;
 
 struct State {
-    map: Map,
-    camera: Camera,
+    ecs: World,
+    resources: Resources,
+    systems: Schedule,
 }
 impl State {
     fn new() -> Self {
+        let mut ecs = World::default();
+        let mut resources = Resources::default();
         let mut rng = RandomNumberGenerator::new();
         let map_builder = MapBuilder::build(&mut rng);
+        spawn_player(&mut ecs, map_builder.player_start);
+        resources.insert(map_builder.map);
+        resources.insert(Camera::new(map_builder.player_start));
+
         Self {
-            map: map_builder.map,
-            camera: Camera::new(map_builder.player_start),
+            ecs,
+            resources,
+            systems: build_scheduler(),
         }
     }
 }
@@ -39,8 +53,9 @@ impl GameState for State {
         ctx.cls();
         ctx.set_active_console(1);
         ctx.cls();
-        // TODO: execute systems
-        // TODO: Render Draw Buffer
+        self.resources.insert(ctx.key);
+        self.systems.execute(&mut self.ecs, &mut self.resources);
+        render_draw_buffer(ctx).expect("Render error");
     }
 }
 
